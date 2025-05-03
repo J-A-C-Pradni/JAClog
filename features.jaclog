@@ -1,0 +1,81 @@
+# BASIC_OPERATIONS_______________________________________________________________________
+# Implemented
+# Tested
+
+ASSERT lokacja_gracza("Izba").
+ASSERT lokacja_postaci("Pan Młody", "Izba").
+RETRACT lokacja_gracza("Izba").
+RUN lokacja_postaci("Pan Młody", "Izba").
+RUN lokacja_gracza("Izba").
+
+# RULES_DEFINITIONS______________________________________________________________________
+# Implemented
+# Tested
+
+DEFINE opisz("Panna Młoda"):
+    RUN lokacja_gracza("Izba"),
+    CALL print("Panna Młoda ma włosy i nogi").
+
+# CONDITIONALS___________________________________________________________________________
+# Implemented
+# Tested
+
+DEFINE opisz("Goście Weselni"):
+    IF RUN lokacja_postaci("Wilkołak", "Izba"):
+        CALL print("Goście Weselni aktualnie są zjadani");
+    ELSE:
+        CALL print("Goście Weselni się weselą, duh").
+
+# OPERATORS______________________________________________________________________________
+# Implemented
+# Tested
+
+DEFINE opisz("Panna Młoda"):
+    IF EITHER RUN lokacja_postaci("Wilkołak", "Izba") | RUN lokacja_postaci("Wampir", "Izba"):
+        NOT martwa_postać("Panna Młoda"),
+        CALL print("Panna Młoda aktualnie jest zjadana");
+    ELSE:
+        CALL print("Panna Młoda sobie siedzi").
+
+# SIMPLE_COMMUNICATION___________________________________________________________________
+# Implemented
+# Tested
+
+DEFINE zaatakuj("Pan Młody", "Strzelba"):
+    CALL rpg.boolean_test("Domokrążca", "Strzelectwo", "Strzelba"),
+    IF CALL is_true:
+        ASSERT martwa_postać("Pan Młody");
+    ELSE:
+        RUN chybiony_strzał.
+
+# ARYTMETYKA_____________________________________________________________________________
+
+ASSERT czas(0).
+
+DEFINE czekaj:
+    # FIND czas(T)
+    RETRACT czas(T),
+    SET T = T + 1,
+    ASSERT czas(T),
+    ruch_wilkołaka.
+
+# KOMUNIKACJA Z PROGRAMEM ORAZ ARYTMETYKA________________________________________________
+
+DEFINE atakuj("Panna Młoda"):
+    CALL wfrp.calculate_damage("Domokrążca", "Panna Młoda", "Szermierka", "Szabla"),
+    LOAD Damage,
+    IF Damage > 0, Damage < 16, ! Damage == 12:
+        FIND zraniona_panna_młoda(Damage);
+    ELSE:
+        RUN oburzona_panna_młoda.
+
+# ZASADY OGÓLNE__________________________________________________________________________
+
+DEFINE kierunek(Kierunek):
+    FIND lokacja_gracza(AktualnaLokacja),
+    FIND graniczy(AktualnaLokacja, NowaLokacja, Kierunek, Obiekt),
+    FIND otwarte(Obiekt),
+    RETRACT lokacja_gracza(AktualnaLokacja),
+    ASSERT lokacja_gracza(NowaLokacja),
+    RUN rozejrzyj,
+    RUN zwiększ_czas.
