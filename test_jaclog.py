@@ -141,3 +141,18 @@ def test_simple_communication(capsys):
     result = result and RunStatement(db, "martwa_postać", ["Pan Młody"]).run()
     
     assert result
+
+def test_cut_off(capsys):
+    db = Database()
+    db.add_callmap({"print": print})
+
+    EitherStatement(db, "run", [], [
+        CallStatement(db, "print", ["This should show up"]),
+        RunStatement(db, "lokacja_postaci", ["Wilkołak", "Izba"]),
+        CallStatement(db, "print", ["Whereas this should not"])
+    ]).run()
+
+    captured = capsys.readouterr()
+    assert captured.out == (
+        "This should show up\n"
+    )
