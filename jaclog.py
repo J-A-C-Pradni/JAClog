@@ -131,6 +131,14 @@ class EitherStatement(Statement):
 
     def run(self) -> bool:
         return any(s.run() for s in self._statements)
+    
+class AllStatement(Statement):
+    def __init__(self, db, name, args, statements):
+        super().__init__(db, name, args)
+        self._statements = statements
+
+    def run(self) -> bool:
+        return all(s.run() for s in self._statements)
 
 class NotStatement(Statement):
     def __init__(self, db, name, args):
