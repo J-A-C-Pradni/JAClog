@@ -1,4 +1,27 @@
-# Variable_______________________________________________________________________________
+from typing import Any
+
+# Variable _______________________________________________________________________________
+
+class Var:
+    def __init__(self):
+        self._substituted:Any = 0
+        self._values:list = []
+    
+    def substitute(self, v:Any):
+        self._substituted = v
+    
+    def get_substituted(self):
+        return self._substituted
+    
+    def add_value(self, v:Any):
+        self._values.append(v)
+    
+    @property
+    def values(self):
+        return self._values
+
+    def clear_values(self):
+        self._values.clear()
 
 # Database_______________________________________________________________________________
 
@@ -9,12 +32,19 @@ class Database:
         self._str_output = ""
         self._int_output = 0
         self._bool_output = False
+        self._var_queue = []
     
     def __str__(self):
         return "\n".join(str(rule) for rule in self._database)
 
     def add_callmap(self, callmap:dict[str, callable]):
         self._callmap = self._callmap | callmap
+    
+    def clear_var_queue(self):
+        self._var_queue.clear()
+    
+    def add_var(self, var:Var):
+        self._var_queue.append(var)
 
     def set_str(self, s:str):
         self._str_output = s
@@ -66,37 +96,37 @@ class Database:
 # Statements_____________________________________________________________________________
 
 class Statement:
-    def __init__(self, db:Database, name:str, args:list[str]):
+    def __init__(self, db:Database, name:str, args:list):
         self._db = db
         self._name = name
         self._args = args
-    
+
     def run(self) -> bool:
         pass
 
 class AssertStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str]):
+    def __init__(self, db:Database, name:str, args:list):
         super().__init__(db, name, args)
     
     def run(self) -> bool:
         return self._db.assert_rule(Rule(self._name, self._args))
 
 class RetractStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str]):
+    def __init__(self, db:Database, name:str, args:list):
         super().__init__(db, name, args)
     
     def run(self) -> bool:
         return self._db.retract_rule(Rule(self._name, self._args))
 
 class RunStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str]):
+    def __init__(self, db:Database, name:str, args:list):
         super().__init__(db, name, args)
     
     def run(self) -> bool:
         return self._db.run(Rule(self._name, self._args))
 
 class DefineStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str], statements:list[Statement]):
+    def __init__(self, db:Database, name:str, args:list, statements:list[Statement]):
         super().__init__(db, name, args)
         self._statements = statements
     
@@ -104,7 +134,7 @@ class DefineStatement(Statement):
         return self._db.assert_rule(Rule(self._name, self._args, self._statements))
 
 class CallStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str]):
+    def __init__(self, db:Database, name:str, args:list):
         super().__init__(db, name, args)
     
     def run(self) -> bool:
@@ -115,7 +145,7 @@ class CallStatement(Statement):
             return False
 
 class IfStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str], 
+    def __init__(self, db:Database, name:str, args:list, 
         antecedent:list[Statement], consequent:list[Statement], alternate:list[Statement]
     ):
         super().__init__(db, name, args)
@@ -129,7 +159,7 @@ class IfStatement(Statement):
         return all(al.run() for al in self._alternate)
 
 class EitherStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str], statements:list[Statement]):
+    def __init__(self, db:Database, name:str, args:list, statements:list[Statement]):
         super().__init__(db, name, args)
         self._statements = statements
 
@@ -137,7 +167,7 @@ class EitherStatement(Statement):
         return any(s.run() for s in self._statements)
     
 class AllStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str], statements:list[Statement]):
+    def __init__(self, db:Database, name:str, args:list, statements:list[Statement]):
         super().__init__(db, name, args)
         self._statements = statements
 
@@ -145,23 +175,30 @@ class AllStatement(Statement):
         return all(s.run() for s in self._statements)
 
 class NotStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str]):
+    def __init__(self, db:Database, name:str, args:list):
         super().__init__(db, name, args)
     
     def run(self) -> bool:
         return not self._db.run(Rule(self._name, self._args))
 
 class FindStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list[str]):
+    def __init__(self, db:Database, name:str, args:list):
         super().__init__(db, name, args)
     
     def run(self) -> bool:
         pass
 
+class EndStatement(Statement):
+    def __init__(self, db:Database, name:str, args:list):
+        super().__init__(db, name, args)
+    
+    def run(self) -> bool:
+        self._db.clear_var_queue()
+
 # Rule___________________________________________________________________________________
 
 class Rule:
-    def __init__(self, name:str, args:list[str], statements:list[Statement]=[]):
+    def __init__(self, name:str, args:list, statements:list[Statement]=[]):
         self._name = name
         self._args = args
         self._statements = statements
