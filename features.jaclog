@@ -21,7 +21,7 @@ DEFINE opisz("Panna Młoda"):
 # Tested
 
 DEFINE opisz("Goście Weselni"):
-    IF RUN lokacja_postaci("Wilkołak", "Izba"):
+    IF lokacja_postaci("Wilkołak", "Izba"):
         CALL print("Goście Weselni aktualnie są zjadani");
     ELSE:
         CALL print("Goście Weselni się weselą, duh").
@@ -31,8 +31,8 @@ DEFINE opisz("Goście Weselni"):
 # Tested
 
 DEFINE opisz("Panna Młoda"):
-    IF ( EITHER ( ALL ( RUN lokacja_postaci("Wilkołak", "Izba"), RUN jest_północ ), RUN lokacja_postaci("Wampir", "Izba") ) ):
-        NOT RUN martwa_postać("Panna Młoda"),
+    IF ( lokacja_postaci("Wilkołak", "Izba") & jest_północ ) | lokacja_postaci("Wampir", "Izba"):
+        NOT martwa_postać("Panna Młoda"),
         CALL print("Panna Młoda aktualnie jest zjadana");
     ELSE:
         CALL print("Panna Młoda sobie siedzi").
