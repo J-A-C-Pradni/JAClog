@@ -3,14 +3,21 @@ from typing import Any
 # Variable _______________________________________________________________________________
 
 class Var:
-    def __init__(self):
+    def __init__(self, name:str):
+        self._name = name
         self._substituted:Any = 0
         self._values:list = []
     
+    def __str__(self):
+        return f"VAR {self._name}"
+
+    def __repr__(self):
+        return self.__str__()
+
     def substitute(self, v:Any):
         self._substituted = v
     
-    def get_substituted(self):
+    def get_substitute(self):
         return self._substituted
     
     def add_value(self, v:Any):
@@ -63,6 +70,9 @@ class Database:
 
     def get_bool(self):
         return self._bool_output
+    
+    def clear(self):
+        self._database.clear()
 
     @property
     def callmap(self):
@@ -83,6 +93,13 @@ class Database:
     def assert_rule(self, rule:"Rule"):
         if self.find_rule(rule) == -1:
             self._database.append(rule)
+            return True
+        return False
+    
+    def assert_vrule(self, rule:"VRule"):
+        if self.find_rule(rule) == -1:
+            self._database.append(rule)
+            rule.put_in_db()
             return True
         return False
 
@@ -181,19 +198,20 @@ class NotStatement(Statement):
     def run(self) -> bool:
         return not self._db.run(Rule(self._name, self._args))
 
-class FindStatement(Statement):
-    def __init__(self, db:Database, name:str, args:list):
-        super().__init__(db, name, args)
-    
-    def run(self) -> bool:
-        pass
-
 class EndStatement(Statement):
     def __init__(self, db:Database, name:str, args:list):
         super().__init__(db, name, args)
     
     def run(self) -> bool:
         self._db.clear_var_queue()
+
+class VDefineStatement(Statement):
+    def __init__(self, db:Database, name:str, args:list, statements:list[Statement]):
+        super().__init__(db, name, args)
+        self._statements = statements
+    
+    def run(self):
+        return self._db.assert_vrule(VRule(self._name, self._args, self._statements))
 
 # Rule___________________________________________________________________________________
 
@@ -213,3 +231,26 @@ class Rule:
         if self._statements != []:
             return all(statement.run() for statement in self._statements)
         return True
+
+class VRule(Rule):
+    def __init__(self, name: str, args:list[Var], statements:list[Statement]=[]):
+        self._name = name
+        self._args = args
+        self._statements = statements
+        self._in_db_flag = False
+
+    def put_in_db(self):
+        self._in_db_flag = True
+
+    def __eq__(self, other:"Rule"):
+        if self._in_db_flag:
+            if self._name == other._name and len(self._args) == len(other._args):
+                for i in range(len(self._args)):
+                    self._args[i].substitute(other._args[i])
+                return True
+            return False
+        else:
+            return self._name == other._name and len(self._args) == len(other._args) and isinstance(other, VRule)
+        
+    def run(self) -> bool:
+        return Rule(self._name, [arg.get_substitute() for arg in self._args], self._statements).run()

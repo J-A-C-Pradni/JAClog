@@ -146,7 +146,7 @@ def test_cut_off(capsys):
     db = Database()
     db.add_callmap({"print": print})
 
-    EitherStatement(db, "run", [], [
+    EitherStatement(db, "order", [], [
         CallStatement(db, "print", ["This should show up"]),
         RunStatement(db, "lokacja_postaci", ["Wilkołak", "Izba"]),
         CallStatement(db, "print", ["Whereas this should not"])
@@ -155,4 +155,59 @@ def test_cut_off(capsys):
     captured = capsys.readouterr()
     assert captured.out == (
         "This should show up\n"
+    )
+
+def test_vdefine(capsys):
+    db = Database()
+    db.add_callmap({"print": print})
+
+    VDefineStatement(db, "opisz", [Var("Lokacja")], [
+        CallStatement(db, "print", ["Jest to z pewnością lokacja"])
+    ]).run()
+
+    RunStatement(db, "opisz", ["Izba"]).run()
+
+    captured = capsys.readouterr()
+    assert captured.out == (
+        "Jest to z pewnością lokacja\n"
+    )
+
+def test_vdefine_order(capsys):
+    db = Database()
+    db.add_callmap({"print": print})
+
+    DefineStatement(db, "opisz", ["Izba"], [
+        CallStatement(db, "print", ["Jest to izba!"])
+    ]).run()
+    
+    VDefineStatement(db, "opisz", [Var("Lokacja")], [
+        CallStatement(db, "print", ["Jest to z pewnością lokacja"])
+    ]).run()
+
+    RunStatement(db, "opisz", ["Izba"]).run()
+    RunStatement(db, "opisz", ["Studnia"]).run()
+
+    captured = capsys.readouterr()
+    assert captured.out == (
+        "Jest to izba!\n"
+        "Jest to z pewnością lokacja\n"
+    )
+
+def test_multiple_vrules(capsys):
+    db = Database()
+    db.add_callmap({"print": print})
+
+    VDefineStatement(db, "opisz", [Var("Lokacja")], [
+        CallStatement(db, "print", ["Jest to z pewnością lokacja"])
+    ]).run()
+
+    VDefineStatement(db, "opisz", [Var("Miejsce")], [
+        CallStatement(db, "print", ["Jest to z pewnością lokacja"])
+    ]).run()
+
+    print(db)
+
+    captured = capsys.readouterr()
+    assert captured.out == (
+        "opisz(VAR Lokacja) + 1\n"
     )

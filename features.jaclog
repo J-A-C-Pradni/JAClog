@@ -31,7 +31,7 @@ DEFINE opisz("Goście Weselni"):
 # Tested
 
 DEFINE opisz("Panna Młoda"):
-    IF ( EITHER ( ALL ( RUN lokacja_postaci("Wilkołak", "Izba") & RUN jest_północ ) | RUN lokacja_postaci("Wampir", "Izba") ) ):
+    IF ( EITHER ( ALL ( RUN lokacja_postaci("Wilkołak", "Izba"), RUN jest_północ ), RUN lokacja_postaci("Wampir", "Izba") ) ):
         NOT RUN martwa_postać("Panna Młoda"),
         CALL print("Panna Młoda aktualnie jest zjadana");
     ELSE:
@@ -48,7 +48,13 @@ DEFINE zaatakuj("Pan Młody", "Strzelba"):
     ELSE:
         RUN chybiony_strzał.
 
-# ZASADY OGÓLNE__________________________________________________________________________
+# SIMPLE_GENERAL_RULES___________________________________________________________________
+# Tested
+
+VDEFINE opisz(Lokacja):
+    CALL print("Jest to z pewnością lokacja").
+
+# GENERAL_RULES__________________________________________________________________________
 
 VDEFINE ruch(Kierunek):
     FIND lokacja_gracza(AktualnaLokacja),
